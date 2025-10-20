@@ -108,10 +108,17 @@ public class RestApiCarController {
 
     //homework №5
     /**
+     * CET api/cars/color/{color}
      * найти все автомобили по цвету
      * @param color
+     * @return Возвращает список найденных автомобилей по параметру {color}. Если не найден, возвращается пустой список
      */
-@GetMapping("/{color}")
+    @Operation( summary = "Get cars by color",
+            description = "Returns a list of cars filtered by color",
+            responses = @ApiResponse(responseCode = "200", description = "Found cars with color ")
+
+    )
+@GetMapping("/color/{color}")
 
     ResponseEntity<List<Car>> getCarsByColor(@PathVariable String color) {
 
@@ -119,6 +126,9 @@ public class RestApiCarController {
         carsByColor = cars.stream().filter( car -> car.getColor().toLowerCase().equals(color.toLowerCase())).toList();
         if (carsByColor.isEmpty()) {
             log.info("Color not found", color);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        } else {
+            log.info("Found {} cars with color {}", carsByColor.size(), color);
         }
 
         return  new ResponseEntity<>(carsByColor, HttpStatus.OK);
