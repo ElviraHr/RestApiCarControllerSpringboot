@@ -106,13 +106,20 @@ public class RestApiCarController {
         cars.removeIf(car -> car.getId() == id);
     }
 
-    //homework
+    //homework №5
+    /**
+     * найти все автомобили по цвету
+     * @param color
+     */
 @GetMapping("/{color}")
 
     ResponseEntity<List<Car>> getCarsByColor(@PathVariable String color) {
 
         List<Car> carsByColor = new ArrayList<>();
         carsByColor = cars.stream().filter( car -> car.getColor().toLowerCase().equals(color.toLowerCase())).toList();
+        if (carsByColor.isEmpty()) {
+            log.info("Color not found", color);
+        }
 
         return  new ResponseEntity<>(carsByColor, HttpStatus.OK);
 }
