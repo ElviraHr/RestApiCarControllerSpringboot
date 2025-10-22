@@ -136,10 +136,94 @@ public class RestApiCarController {
 
         List<Car> filteredCars = carRepository.findCarByColorIgnoreCase(color);
         if (filteredCars.isEmpty()) {
-            log.warn("Color not found", color);
+            log.warn("Color {} not found", color);
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         } else {
             log.info("Found {} cars with color {}", filteredCars.size(), color);
+        }
+
+        return new ResponseEntity<>(filteredCars, HttpStatus.OK);
+    }
+
+    //Homework 5_2
+
+    /**
+     * CET api/cars/color/{color}
+     * найти все автомобили в заданном диапазоне стоимости
+     *
+     * @param min - минимальная граница цены,
+     * @param max - максимальная граница цены(включительно)
+     * @return Возвращает список найденных автомобилей по параметру {color}. Если не найден, возвращается пустой список
+     */
+    @Operation(summary = "Get cars between min-max price",
+            description = "Returns a list of cars filtered by price between min and max price",
+            responses = @ApiResponse(responseCode = "200", description = "Found cars price between ")
+    )
+    @GetMapping("/price/between/{min}/{max}")
+    ResponseEntity<List<Car>> getCarsByPriceBetween(@PathVariable double min, @PathVariable double max) {
+
+        List<Car> filteredCars = new ArrayList<>();
+        if (max <= min) {
+            return new ResponseEntity<>(filteredCars, HttpStatus.BAD_REQUEST);
+        }
+        filteredCars = carRepository.findCarByPriceBetween(min, max);
+        if (filteredCars.isEmpty()) {
+            log.warn("Price between {} and {} not found", min, max);
+            return new ResponseEntity<>(filteredCars, HttpStatus.NOT_FOUND);
+        } else {
+            log.info("Found {} cars price between {} and {}", filteredCars.size(), min, max);
+        }
+
+        return new ResponseEntity<>(filteredCars, HttpStatus.OK);
+    }
+
+    /**
+     * CET api/cars/price/under/{max}
+     * найти все автомобили стоимостью ниже <max>
+     *
+     * @param max
+     * @return Возвращает список найденных автомобилей стоимостью ниже параметра {max}. Если не найден, возвращается пустой список
+     */
+    @Operation(summary = "Get cars by color",
+            description = "Returns a list of cars filtered by color",
+            responses = @ApiResponse(responseCode = "200", description = "Found cars with color ")
+
+    )
+    @GetMapping("/price/under/{max}")
+    ResponseEntity<List<Car>> getCarsByPriceUnder(@PathVariable double max) {
+
+        List<Car> filteredCars = carRepository.findCarByPriceBefore(max);
+        if (filteredCars.isEmpty()) {
+            log.warn("Price under {} not found", max);
+            return new ResponseEntity<>(filteredCars, HttpStatus.NOT_FOUND);
+        } else {
+            log.info("Found {} cars with under price {}", filteredCars.size(), max);
+        }
+
+        return new ResponseEntity<>(filteredCars, HttpStatus.OK);
+    }
+
+    /**
+     * CET api/cars/price/over/{min}
+     * найти все автомобили стоимостью выше <min>
+     *
+     * @param min
+     * @return Возвращает список найденных автомобилей стоимостью выше параметра {min}. Если не найден, возвращается пустой список
+     */
+    @Operation(summary = "Get cars by color",
+            description = "Returns a list of cars filtered by color",
+            responses = @ApiResponse(responseCode = "200", description = "Found cars with color ")
+
+    )
+    @GetMapping("/price/over/{min}")
+    ResponseEntity<List<Car>> getCarsByPriceOver(@PathVariable double min) {
+
+        List<Car> filteredCars = carRepository.findCarByPriceAfter(min);
+        if (filteredCars.isEmpty()) {
+            log.warn("Price over {} not found", min);
+            return new ResponseEntity<>(filteredCars, HttpStatus.NOT_FOUND);
+        } else {
+            log.info("Found {} cars with price over {}", filteredCars.size(), min);
         }
 
         return new ResponseEntity<>(filteredCars, HttpStatus.OK);

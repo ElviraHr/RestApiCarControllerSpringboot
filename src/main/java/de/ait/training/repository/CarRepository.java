@@ -7,4 +7,10 @@ import java.util.List;
 
 public interface CarRepository extends JpaRepository<Car, Long> {
     List<Car> findCarByColorIgnoreCase(String color);
+
+    List<Car> findCarByPriceBetween(double priceAfter, double priceBefore);
+
+    List<Car> findCarByPriceAfter(double priceAfter);
+
+    List<Car> findCarByPriceBefore(double priceBefore);
 }
