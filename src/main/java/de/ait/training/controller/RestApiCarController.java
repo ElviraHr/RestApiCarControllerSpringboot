@@ -1,6 +1,7 @@
 package de.ait.training.controller;
 
 import de.ait.training.model.Car;
+import de.ait.training.repository.CarRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -25,18 +26,23 @@ import java.util.List;
 @RestController
 public class RestApiCarController {
 
-    Car carOne = new Car(1, "BMW x5", "black", 25000);
-    Car carTwo = new Car(1, "Audi A4", "green", 15000);
-    Car carThree = new Car(1, "MB A220", "white", 18000);
-    Car carFour = new Car(1, "Ferrari", "red", 250000);
+    private CarRepository carRepository;
 
-    List<Car> cars = new ArrayList<>();
+    /* Car carOne = new Car(1, "BMW x5", "black", 25000);
+     Car carTwo = new Car(2, "Audi A4", "green", 15000);
+     Car carThree = new Car(3, "MB A220", "white", 18000);
+     Car carFour = new Car(4, "Ferrari", "red", 250000);
 
-    public RestApiCarController() {
-        cars.add(carOne);
-        cars.add(carTwo);
-        cars.add(carThree);
-        cars.add(carFour);
+      List<Car> cars = new ArrayList<>();
+
+     public RestApiCarController() {
+         cars.add(carOne);
+         cars.add(carTwo);
+         cars.add(carThree);
+         cars.add(carFour);
+     */
+    public RestApiCarController(CarRepository carRepository) {
+        this.carRepository = carRepository;
     }
 
     /**
@@ -46,17 +52,18 @@ public class RestApiCarController {
      **/
     @GetMapping
     Iterable<Car> getCars() {
-        return cars;
+        return carRepository.findAll();
     }
 
-     /**
+    /**
      * Создает новый автомобиль и добавляет его в лист
+     *
      * @param car
      * @return созданный автомобиль
      */
-     //тег для отображения в документации вместе с
+    //тег для отображения в документации вместе с
     @Operation(
-            summary =  "Create car",
+            summary = "Create car",
             description = "Create a new car",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Created")
@@ -64,75 +71,79 @@ public class RestApiCarController {
     )
     @PostMapping
     Car postCar(@RequestBody Car car) {
-        if(car.getId() <= 0) {
+        if (car.getId() <= 0) {
             log.error("Car id must be greater than zero");
-            Car errorCar = new Car(9999, "000", "000", 9999);
+            Car errorCar = new Car("000", "000", 9999);
             return errorCar;
         }
-        cars.add(car);
+        carRepository.save(car);
         log.info("Car posted successfully");
         return car;
     }
 
     /**
      * Замена существующего автомобиля, если id не найден то создаем новый
+     *
      * @param id
      * @param car
      * @return созданный или найденный автомобиль
      */
     @PutMapping("/{id}")
-    ResponseEntity<Car> putCar(@PathVariable long id, @RequestBody Car car) {
-        int carIndex = -1;
-        for (Car carInList : cars) {
-            if(carInList.getId() == id) {
-                carIndex = cars.indexOf(carInList);
-                cars.set(carIndex, car);
-                log.info("Car id " + carInList.getId() + " has been updated");
-            }
+    ResponseEntity<Car> putCar(@PathVariable Long id, @RequestBody Car car) {
+
+        Car foundCar = carRepository.findById(id).orElse(null);
+
+        if (foundCar == null) {
+            log.error("Car not found");
+        } else {
+            log.info("Car {} found", foundCar);
+            carRepository.save(car);
         }
 
-        return  (carIndex == -1)
+
+        return (foundCar == null)
                 ? new ResponseEntity<>(postCar(car), HttpStatus.CREATED)
                 : new ResponseEntity<>(car, HttpStatus.OK);
     }
 
     /**
      * удаляем автомобиль по id
+     *
      * @param id
      */
     @DeleteMapping("/{id}")
     void deleteCar(@PathVariable long id) {
         log.info("Delete car with id {}", id);
-        cars.removeIf(car -> car.getId() == id);
+        carRepository.deleteById(id);
     }
 
     //homework №5
+
     /**
      * CET api/cars/color/{color}
      * найти все автомобили по цвету
+     *
      * @param color
      * @return Возвращает список найденных автомобилей по параметру {color}. Если не найден, возвращается пустой список
      */
-    @Operation( summary = "Get cars by color",
+    @Operation(summary = "Get cars by color",
             description = "Returns a list of cars filtered by color",
             responses = @ApiResponse(responseCode = "200", description = "Found cars with color ")
 
     )
-@GetMapping("/color/{color}")
-
+    @GetMapping("/color/{color}")
     ResponseEntity<List<Car>> getCarsByColor(@PathVariable String color) {
 
-        List<Car> carsByColor = new ArrayList<>();
-        carsByColor = cars.stream().filter( car -> car.getColor().toLowerCase().equals(color.toLowerCase())).toList();
-        if (carsByColor.isEmpty()) {
-            log.info("Color not found", color);
+        List<Car> filteredCars = carRepository.findCarByColorIgnoreCase(color);
+        if (filteredCars.isEmpty()) {
+            log.warn("Color not found", color);
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         } else {
-            log.info("Found {} cars with color {}", carsByColor.size(), color);
+            log.info("Found {} cars with color {}", filteredCars.size(), color);
         }
 
-        return  new ResponseEntity<>(carsByColor, HttpStatus.OK);
-}
+        return new ResponseEntity<>(filteredCars, HttpStatus.OK);
+    }
 
 
 }
